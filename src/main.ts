@@ -15,13 +15,19 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Registrar plugin de cookies ANTES de qualquer configuração
   const fastifyCookie = (await import('@fastify/cookie')).default;
   await app.register(fastifyCookie, {
     secret: (configService.get<string>('COOKIE_SECRET') as string) || 'my-secret-key-for-cookies',
   });
 
-  // Configurar CORS
+  const fastifyMultipart = (await import('@fastify/multipart')).default;
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 30 * 1024 * 1024, // 30MB
+      files: 1,
+    },
+  });
+
   app.enableCors({
     origin: process.env.NODE_ENV === 'production' ? false : true,
     credentials: true,
@@ -29,7 +35,6 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // Configurar validação global
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -38,7 +43,6 @@ async function bootstrap() {
     }),
   );
 
-  // Configurar prefixo global da API
   app.setGlobalPrefix('api/v1');
 
   const port = configService.get('PORT') || 3000;

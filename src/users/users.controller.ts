@@ -1,11 +1,15 @@
 import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { UserAccessService } from './services/user-access.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly userAccessService: UserAccessService,
+  ) { }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
@@ -20,7 +24,15 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getProfile(@Request() req) {
-    return req.user;
+  async getProfile(@Request() req) {
+    const user = req.user;
+    const isFirstAccess = await this.userAccessService.isFirstAccess(user.id);
+    const accessCount = await this.userAccessService.getAccessCount(user.id);
+
+    return {
+      ...user,
+      isFirstAccess,
+      accessCount,
+    };
   }
 }
