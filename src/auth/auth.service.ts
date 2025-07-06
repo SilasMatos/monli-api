@@ -53,7 +53,6 @@ export class AuthService {
       const payload = { email: user.email, sub: user.id };
       const access_token = this.jwtService.sign(payload);
 
-      // Configurar cookie HTTP-only no Fastify
       response.setCookie('access_token', access_token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -62,7 +61,7 @@ export class AuthService {
         path: '/',
       });
 
-      // Registrar acesso
+
       await this.userAccessService.create({
         userId: user.id,
         ...clientInfo,
@@ -75,8 +74,8 @@ export class AuthService {
 
       return {
         message: 'Login realizado com sucesso',
+        success: true,
         user: {
-
           isFirstAccess,
           accessCount,
         },
