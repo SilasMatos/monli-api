@@ -70,13 +70,16 @@ export class AuthService {
         success: true,
       });
 
-      // Verificar se é o primeiro acesso
       const isFirstAccess = await this.userAccessService.isFirstAccess(user.id);
       const accessCount = await this.userAccessService.getAccessCount(user.id);
 
       return {
         message: 'Login realizado com sucesso',
-        success: true,
+        user: {
+
+          isFirstAccess,
+          accessCount,
+        },
       };
 
     } catch (error) {
