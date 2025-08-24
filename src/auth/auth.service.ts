@@ -75,6 +75,7 @@ export class AuthService {
       return {
         message: 'Login realizado com sucesso',
         success: true,
+        token: access_token,
         user: {
           isFirstAccess,
           accessCount,

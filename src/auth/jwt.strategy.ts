@@ -1,25 +1,36 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
-import { UsersService } from '../users/users.service';
+import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { FastifyRequest } from 'fastify';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private usersService: UsersService) {
+  constructor(configService: ConfigService) {
+    const jwtSecret = configService.get<string>('JWT_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is not defined in environment variables');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (request: any) => {
-          // Para Fastify, os cookies estão em request.cookies
-          return request?.cookies?.access_token;
+        (request: FastifyRequest | any) => {
+    
+          if (request.headers?.authorization) {
+            return request.headers.authorization.replace('Bearer ', '');
+          }
+      
+          if (request.cookies && request.cookies.access_token) {
+            return request.cookies.access_token;
+          }
+          return null;
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'your-secret-key',
+      secretOrKey: jwtSecret,
     });
   }
 
   async validate(payload: any) {
-    const user = await this.usersService.findById(payload.sub);
-    return user;
+    return { userId: payload.sub, email: payload.email };
   }
 }
